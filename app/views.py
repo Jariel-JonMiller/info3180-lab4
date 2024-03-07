@@ -88,6 +88,7 @@ def logout():
     return redirect(url_for('home'))
 
 @app.route("/uploads/<filename>")
+@login_required
 def get_image(filename):
     send_from_directory(os.path.join(os.getcwd(), app.config['UPLOAD_FOLDER']), filename)
 
