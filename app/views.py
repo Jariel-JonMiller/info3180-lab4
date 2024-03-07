@@ -3,9 +3,9 @@ from app import app, db, login_manager
 from flask import render_template, request, redirect, url_for, flash, session, abort
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.utils import secure_filename
-from werkzeug.security import check_password_hash()
+from werkzeug.security import check_password_hash
 from app.models import UserProfile
-from app.forms import LoginForm
+from app.forms import LoginForm, UploadForm
 
 
 ###
@@ -21,21 +21,29 @@ def home():
 @app.route('/about/')
 def about():
     """Render the website's about page."""
-    return render_template('about.html', name="Mary Jane")
-
+    return render_template('about.html', name="Jariel-Jon Miller")
 
 @app.route('/upload', methods=['POST', 'GET'])
+@login_required
 def upload():
     # Instantiate your form class
+    form = UploadForm()
 
+    if request.method == 'GET':
+        return render_template('upload.html')
+
+    if request.method == 'POST':
     # Validate file upload on submit
-    if form.validate_on_submit():
-        # Get file data and save to your uploads folder
+        if form.validate_on_submit():
+            # Get file data and save to your uploads folder
+            file = form.fileImg.data
+            filename = secure_filename(file.filename)
+            
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            flash('File Saved', 'success')
+            return redirect(url_for('home')) # Update this to redirect the user to a route that displays all uploaded image files
 
-        flash('File Saved', 'success')
-        return redirect(url_for('home')) # Update this to redirect the user to a route that displays all uploaded image files
-
-    return render_template('upload.html')
+        return render_template('upload.html')
 
 
 @app.route('/login', methods=['POST', 'GET'])
@@ -43,12 +51,6 @@ def login():
     form = LoginForm()
 
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-
-        if not username or not password:
-            flash('Both username and password are required.', 'error')
-            return redirect(url_for('login'))
 
     # change this to actually validate the entire form submission
     # and not just one field
@@ -74,7 +76,7 @@ def login():
                 return redirect(url_for('upload')) # The user should be redirected to the upload form instead
             else:
                 flash('Invalid username or password.', 'error')
-                return render_template("login.html", form=form)
+    return render_template("login.html", form=form)
         
 
 # user_loader callback. This callback is used to reload the user object from
